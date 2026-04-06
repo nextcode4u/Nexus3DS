@@ -1,9 +1,16 @@
 .vscode
+.codex
 out
 build
+build-logs
 arm11/build
+arm9/build
+k11_extension/build
 sysmodules/loader/build
+sysmodules/pm/build
+sysmodules/pxi/build
 sysmodules/rosalina/build
+sysmodules/sm/build
 chainloader/build
 exceptions/arm9/build
 exceptions/arm11/build
@@ -23,3 +30,6 @@ exceptions/arm11/build
 
 Luma3DS*.zip
 hbmenu.zip
+bin/
+refrences/
+crash dumps/

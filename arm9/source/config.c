@@ -1038,7 +1038,7 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
                                                "Splash duration: 1s( ) 3s( ) 5s( ) Custom( )",
                                                "PIN lock: Off( ) 4( ) 6( ) 8( ) digits",
                                                "New 3DS CPU: Off( ) Clock( ) L2( ) Clock+L2( )",
-                                               "Hbmenu autoboot: Off( ) 3DS( ) DSi( )",
+                                               "Homebrew autoboot: Off( ) Homebrew( ) DSi( )",
                                              };
 
     static const char *singleOptionsText[] = { "( ) Autoboot EmuNAND",
@@ -1100,13 +1100,13 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
                                                  "'Clock+L2' can cause issues with some\n"
                                                  "games.",
 
-                                                 "Enable autobooting into homebrew menu,\n"
-                                                 "either into 3DS or DSi mode.\n\n"
-                                                 "Autobooting into a gamecard title is\n"
-                                                 "not supported.\n\n"
-                                                 "Refer to the \"autoboot\" section in the\n"
-                                                 "configuration file to configure\n"
-                                                 "this feature.",
+                                                 "Enable homebrew autoboot.\n\n"
+                                                 "Homebrew mode boots sdmc:/boot.3dsx\n"
+                                                 "through the existing hbldr takeover\n"
+                                                 "target set by\n"
+                                                 "hbldr_3dsx_titleid.\n\n"
+                                                 "DSi mode uses the configured\n"
+                                                 "autoboot_dsi_titleid path.",
 
                                                  "If enabled, an EmuNAND\n"
                                                  "will be launched on boot.\n\n"
@@ -1221,7 +1221,7 @@ void configMenu(bool oldPinStatus, u32 oldPinMode)
         { .visible = true, .page = 0 }, // Splash duration
         { .visible = true, .page = 0 }, // PIN
         { .visible = ISN3DS, .page = 0 }, // n3ds CPU
-        { .visible = true, .page = 1 }, // Autoboot
+        { .visible = true, .page = 0 }, // Autoboot
         // { .visible = true }, audio rerouting, hidden
     };
 
