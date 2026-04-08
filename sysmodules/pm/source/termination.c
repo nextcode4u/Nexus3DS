@@ -1,4 +1,5 @@
 #include <3ds.h>
+#include <3ds/services/ns.h>
 #include "termination.h"
 #include "info.h"
 #include "manager.h"
@@ -7,6 +8,19 @@
 #include "task_runner.h"
 #include "launch.h"
 #include "reslimit.h"
+
+static inline bool isTwlTitleId(u64 titleId)
+{
+    switch ((u32)(titleId >> 32))
+    {
+        case 0x00030004:
+        case 0x00048004:
+        case 0x00048005:
+            return true;
+        default:
+            return false;
+    }
+}
 
 void forceMountSdCard(void)
 {
@@ -472,4 +486,79 @@ Result ChainloadHomebrewDirty(void) {
     }
 
     return res;
+}
+
+static void ChainloadDirectTitleDirtyAsync(void *argdata)
+{
+    const struct {
+        FS_ProgramInfo programInfo;
+    } *args = argdata;
+
+    Result res = 0;
+    ProcessData *app = NULL;
+    u64 deadline = svcGetSystemTick() + (u64)nsToTicks(3 * 1000 * 1000 * 1000LL);
+    ExHeader_Info *exheaderInfo = ExHeaderInfoHeap_New();
+    if (exheaderInfo == NULL) {
+        panic(0);
+    }
+
+    assertSuccess(svcClearEvent(g_manager.allNotifiedTerminationEvent));
+    g_manager.waitingForTermination = true;
+
+    ProcessList_Lock(&g_manager.processList);
+    app = g_manager.runningApplicationData;
+    if (app != NULL) {
+        app->flags &= ~(PROCESSFLAG_DEPENDENCIES_LOADED | PROCESSFLAG_NOTIFY_TERMINATION);
+        terminateProcessImpl(app, exheaderInfo);
+    }
+    ProcessList_Unlock(&g_manager.processList);
+
+    svcSleepThread(50 * 1000 * 1000LL);
+
+    res = commitPendingTerminations(3 * 1000 * 1000 * 1000LL);
+    ExHeaderInfoHeap_Delete(exheaderInfo);
+    g_manager.waitingForTermination = false;
+
+    if (app == NULL) {
+        return;
+    } else if (R_FAILED(res)) {
+        return;
+    }
+
+    do {
+        svcSleepThread(100 * 1000 * 1000LL);
+        ProcessList_Lock(&g_manager.processList);
+        app = g_manager.runningApplicationData;
+        ProcessList_Unlock(&g_manager.processList);
+    } while (svcGetSystemTick() < deadline);
+
+    if (app != NULL) {
+        return;
+    }
+
+    assertSuccess(setAppCpuTimeLimit(0));
+
+    if (isTwlTitleId(args->programInfo.programId)) {
+        res = nsInit();
+        if (R_SUCCEEDED(res)) {
+            res = NS_RebootToTitle(MEDIATYPE_NAND, args->programInfo.programId, OS_KernelConfig->app_memtype);
+            nsExit();
+        }
+    } else {
+        res = LaunchTitle(NULL, &args->programInfo, PMLAUNCHFLAG_LOAD_DEPENDENCIES | PMLAUNCHFLAG_NORMAL_APPLICATION, false);
+    }
+    (void)res;
+}
+
+Result ChainloadDirectTitleDirty(const FS_ProgramInfo *programInfo)
+{
+    struct {
+        FS_ProgramInfo programInfo;
+    } args = { *programInfo };
+
+    if (g_manager.preparingForReboot)
+        return 0xC8A05801;
+
+    TaskRunner_RunTask(ChainloadDirectTitleDirtyAsync, &args, sizeof(args));
+    return 0;
 }

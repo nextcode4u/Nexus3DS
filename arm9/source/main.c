@@ -205,6 +205,9 @@ void main(int argc, char **argv, u32 magicWord)
         nandType = (FirmwareSource)BOOTCFG_NAND;
         emunandIndex = BOOTCFG_EMUINDEX;
         isFirmProtEnabled = !BOOTCFG_NTRCARDBOOT;
+        if ((firmType == TWL_FIRM && hasValidTlncAutobootParams()) ||
+           (firmType == NATIVE_FIRM && CFG_BOOTENV == 3 && hasValidTlncAutobootParams()))
+            needToInitSd = true;
 
         goto boot;
     }

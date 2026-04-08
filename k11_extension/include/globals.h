@@ -182,6 +182,30 @@ extern vu32 rosalinaState;
 extern bool hasStartedRosalinaNetworkFuncsOnce;
 extern KEvent* signalPluginEvent;
 
+enum
+{
+    FIRMMUX_FLAG_NS_SEEN        = 1 << 0,
+    FIRMMUX_FLAG_HOME_APT_SEEN  = 1 << 1,
+    FIRMMUX_FLAG_FOREGROUND_APP = 1 << 2,
+    FIRMMUX_FLAG_RECENT_APP_JUMP = 1 << 3,
+    FIRMMUX_FLAG_ROUTE_VALID    = 1 << 4,
+    FIRMMUX_FLAG_STOCK_HOME_SEEN = 1 << 5,
+    FIRMMUX_FLAG_HBLDR_SHELL_ACTIVE = 1 << 6,
+};
+
+extern u32 firmmuxShellReady;
+extern u32 firmmuxRouteKind;
+extern u32 firmmuxJumpReadiness;
+extern u32 firmmuxFlags;
+extern u32 firmmuxDirectChainloadIntent;
+extern u64 firmmuxDirectChainloadTitleId;
+extern u32 firmmuxDirectChainloadMediaType;
+
+void firmmuxObserveAptRoute(KProcess *process, u32 command);
+void firmmuxUpdateObservationFlags(u32 setMask, u32 clearMask);
+void firmmuxSetDirectChainloadIntent(bool enabled);
+void firmmuxSetDirectChainloadTarget(u64 titleId, u32 mediaType);
+
 typedef enum
 {
     PLG_CFG_NONE = 0,

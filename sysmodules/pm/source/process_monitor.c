@@ -34,6 +34,7 @@ static void cleanupProcess(ProcessData *process)
             assertSuccess(resetAppMemLimit());
         }
         g_manager.runningApplicationData = NULL;
+        firmmuxUpdateObservationFlags(0, FIRMMUX_FLAG_FOREGROUND_APP | FIRMMUX_FLAG_RECENT_APP_JUMP | FIRMMUX_FLAG_HBLDR_SHELL_ACTIVE);
 
         // We need to do this here to ensure that the ExHeader at init matches the ExHeader
         // at termination at all times, otherwise the process refcounts of sysmodules

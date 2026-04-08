@@ -67,6 +67,16 @@ static void handleRestartHbAppNotification(u32 notificationId)
     // and letting app term. notif. go through would cause NS to svcBreak,
     // this is not what we want.
     (void)notificationId;
+
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    FS_ProgramInfo programInfo;
+    if (firmmuxConsumeDirectChainloadRequest(&programInfo))
+    {
+        ChainloadDirectTitleDirty(&programInfo);
+        return;
+    }
+#endif
+
     ChainloadHomebrewDirty();
 }
 

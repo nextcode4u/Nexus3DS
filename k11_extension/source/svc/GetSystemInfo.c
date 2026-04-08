@@ -150,6 +150,62 @@ Result GetSystemInfoHook(s64 *out, s32 type, s32 param)
                 case 0x187:
                     *out = cfwInfo.screenToggleCombo;
                     break;
+                case 0x188:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = firmmuxShellReady;
+#else
+                    *out = 0;
+#endif
+                    break;
+                case 0x189:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = firmmuxRouteKind;
+#else
+                    *out = 0;
+#endif
+                    break;
+                case 0x18A:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = firmmuxJumpReadiness;
+#else
+                    *out = 0;
+#endif
+                    break;
+                case 0x18B:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = firmmuxFlags;
+#else
+                    *out = 0;
+#endif
+                    break;
+                case 0x18C:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = 1;
+#else
+                    *out = 0;
+#endif
+                    break;
+                case 0x190:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = firmmuxDirectChainloadIntent;
+#else
+                    *out = 0;
+#endif
+                    break;
+                case 0x191:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = (s64)firmmuxDirectChainloadTitleId;
+#else
+                    *out = 0;
+#endif
+                    break;
+                case 0x192:
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                    *out = firmmuxDirectChainloadMediaType;
+#else
+                    *out = 0;
+#endif
+                    break;
                 case 0x200: // isRelease
                     *out = cfwInfo.flags & 1;
                     break;

@@ -12,3 +12,4 @@ Result TerminateProcess(u32 pid, s64 timeout);
 Result PrepareForReboot(u32 pid, s64 timeout);
 
 Result ChainloadHomebrewDirty(void);
+Result ChainloadDirectTitleDirty(const FS_ProgramInfo *programInfo);

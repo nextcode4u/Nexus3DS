@@ -3,6 +3,7 @@
 #include <3ds/types.h>
 #include <3ds/result.h>
 #include <3ds/os.h>
+#include <3ds/services/fs.h>
 #include <3ds/srv.h>
 
 #define REG32(reg)              (*(vu32 *)reg)
@@ -11,6 +12,14 @@
 #define IS_N3DS                 (OS_KernelConfig->app_memtype >= 6) // APPMEMTYPE. Hacky but doesn't use APT
 #define N3DS_TID_MASK           0xF0000000ULL
 #define N3DS_TID_BIT            0x20000000ULL
+
+#define FIRMMUX_FLAG_NS_SEEN        BIT(0)
+#define FIRMMUX_FLAG_HOME_APT_SEEN  BIT(1)
+#define FIRMMUX_FLAG_FOREGROUND_APP BIT(2)
+#define FIRMMUX_FLAG_RECENT_APP_JUMP BIT(3)
+#define FIRMMUX_FLAG_ROUTE_VALID    BIT(4)
+#define FIRMMUX_FLAG_STOCK_HOME_SEEN BIT(5)
+#define FIRMMUX_FLAG_HBLDR_SHELL_ACTIVE BIT(6)
 
 #define TRY(expr)               if(R_FAILED(res = (expr))) return res;
 #define TRYG(expr, label)       if(R_FAILED(res = (expr))) goto label;
@@ -80,4 +89,39 @@ static inline s64 nsToTicks(s64 ns)
 static inline s64 ticksToNs(s64 ticks)
 {
     return 1000 * 1000 * 1000LL * ticks / SYSCLOCK_ARM11;
+}
+
+static inline void firmmuxUpdateObservationFlags(u32 setMask, u32 clearMask)
+{
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    svcKernelSetState(0x10081, setMask, clearMask);
+#else
+    (void)setMask;
+    (void)clearMask;
+#endif
+}
+
+static inline bool firmmuxConsumeDirectChainloadRequest(FS_ProgramInfo *outProgramInfo)
+{
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    s64 enabled = 0, titleId = 0, mediaType = 0;
+    bool valid = false;
+
+    if (R_SUCCEEDED(svcGetSystemInfo(&enabled, 0x10000, 0x190)) && enabled != 0 &&
+        R_SUCCEEDED(svcGetSystemInfo(&titleId, 0x10000, 0x191)) &&
+        R_SUCCEEDED(svcGetSystemInfo(&mediaType, 0x10000, 0x192)) &&
+        titleId != 0 && mediaType >= 0 && mediaType <= MEDIATYPE_GAME_CARD)
+    {
+        outProgramInfo->programId = (u64)titleId;
+        outProgramInfo->mediaType = (FS_MediaType)mediaType;
+        valid = true;
+    }
+
+    svcKernelSetState(0x10082, 0, 0, 0);
+    svcKernelSetState(0x10083, 0, 0, 0);
+    return valid;
+#else
+    (void)outProgramInfo;
+    return false;
+#endif
 }

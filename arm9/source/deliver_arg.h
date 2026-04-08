@@ -35,3 +35,4 @@ bool hasValidTlncAutobootParams(void);
 bool isTwlToCtrLaunch(void); // assumes TLNC block is valid
 
 bool configureHomebrewAutoboot(void);
+bool configureDirectTwlLaunch(u64 titleId);

@@ -102,6 +102,11 @@ Result KernelSetStateHook(u32 type, u32 varg1, u32 varg2, u32 varg3)
 
     switch(type)
     {
+        case 0:
+        {
+            res = KernelSetState(type, varg1, varg2, varg3);
+            break;
+        }
         case 0xA: // Type 10 (ConfigureNew3DSCPU)
         {
             if (varg1 & (1 << 2)) // Lock faster speed
@@ -213,6 +218,38 @@ Result KernelSetStateHook(u32 type, u32 varg1, u32 varg2, u32 varg3)
         case 0x10080:
         {
             disableThreadRedirection = varg1 != 0;
+            break;
+        }
+        case 0x10081:
+        {
+#if EXPERIMENTAL_FIRMMUX_SHELL
+            firmmuxUpdateObservationFlags(varg1, varg2);
+#else
+            (void)varg1;
+            (void)varg2;
+#endif
+            break;
+        }
+        case 0x10082:
+        {
+#if EXPERIMENTAL_FIRMMUX_SHELL
+            firmmuxSetDirectChainloadIntent(varg1 != 0);
+#else
+            (void)varg1;
+#endif
+            (void)varg2;
+            (void)varg3;
+            break;
+        }
+        case 0x10083:
+        {
+#if EXPERIMENTAL_FIRMMUX_SHELL
+            firmmuxSetDirectChainloadTarget(((u64)varg3 << 32) | varg2, varg1);
+#else
+            (void)varg1;
+            (void)varg2;
+            (void)varg3;
+#endif
             break;
         }
         default:

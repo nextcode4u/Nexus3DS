@@ -134,6 +134,132 @@ bool hasStartedRosalinaNetworkFuncsOnce;
 KEvent* signalPluginEvent = NULL;
 u32 pidOffsetKProcess, hwInfoOffsetKProcess, codeSetOffsetKProcess, handleTableOffsetKProcess, debugOffsetKProcess, flagsKProcess;
 
+u32 firmmuxShellReady = 0;
+u32 firmmuxRouteKind = 0;
+u32 firmmuxJumpReadiness = 0;
+u32 firmmuxFlags = 0;
+u32 firmmuxDirectChainloadIntent = 0;
+u64 firmmuxDirectChainloadTitleId = 0;
+u32 firmmuxDirectChainloadMediaType = 0;
+
+static inline bool firmmuxIsHomeMenuTitle(u64 titleId)
+{
+    switch (titleId & ~0xF0000000ULL)
+    {
+        case 0x0004003000008F02ULL:
+        case 0x0004003000008202ULL:
+        case 0x0004003000009802ULL:
+        case 0x000400300000A902ULL:
+        case 0x000400300000A102ULL:
+        case 0x000400300000B102ULL:
+            return true;
+        default:
+            return false;
+    }
+}
+
+static inline void firmmuxRefreshContract(void)
+{
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    bool nsSeen = (firmmuxFlags & FIRMMUX_FLAG_NS_SEEN) != 0;
+    bool foregroundAppKnown = (firmmuxFlags & FIRMMUX_FLAG_FOREGROUND_APP) != 0;
+    bool stockHomeSeen = (firmmuxFlags & FIRMMUX_FLAG_STOCK_HOME_SEEN) != 0;
+    bool hbldrShellActive = (firmmuxFlags & FIRMMUX_FLAG_HBLDR_SHELL_ACTIVE) != 0;
+
+    if (!nsSeen)
+        firmmuxShellReady = 0;
+    else if (stockHomeSeen || hbldrShellActive || !foregroundAppKnown)
+        firmmuxShellReady = 2;
+    else
+        firmmuxShellReady = 1;
+
+    if (!nsSeen)
+        firmmuxJumpReadiness = 0;
+    else if (firmmuxShellReady == 2)
+        firmmuxJumpReadiness = 2;
+    else
+        firmmuxJumpReadiness = 1;
+#else
+    firmmuxShellReady = 0;
+    firmmuxRouteKind = 0;
+    firmmuxJumpReadiness = 0;
+    firmmuxFlags = 0;
+#endif
+}
+
+static inline void firmmuxApplyObservationFlags(u32 setMask, u32 clearMask)
+{
+    firmmuxFlags |= setMask;
+    firmmuxFlags &= ~clearMask;
+    firmmuxRefreshContract();
+}
+
+void firmmuxObserveAptRoute(KProcess *process, u32 command)
+{
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    u32 setMask = 0;
+
+    if (command < 10 || command > 12)
+        return;
+
+    setMask |= FIRMMUX_FLAG_HOME_APT_SEEN | FIRMMUX_FLAG_ROUTE_VALID;
+
+    if (firmmuxIsHomeMenuTitle(codeSetOfProcess(process)->titleId))
+    {
+        firmmuxRouteKind = 1;
+        setMask |= FIRMMUX_FLAG_STOCK_HOME_SEEN;
+    }
+    else if (firmmuxFlags & FIRMMUX_FLAG_STOCK_HOME_SEEN)
+    {
+        firmmuxRouteKind = 2;
+    }
+    else
+    {
+        firmmuxRouteKind = 3;
+    }
+
+    firmmuxApplyObservationFlags(setMask, 0);
+#else
+    (void)process;
+    (void)command;
+#endif
+}
+
+void firmmuxUpdateObservationFlags(u32 setMask, u32 clearMask)
+{
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    firmmuxApplyObservationFlags(setMask, clearMask);
+#else
+    (void)setMask;
+    (void)clearMask;
+#endif
+}
+
+void firmmuxSetDirectChainloadIntent(bool enabled)
+{
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    firmmuxDirectChainloadIntent = enabled ? 1 : 0;
+    if (!enabled)
+    {
+        firmmuxDirectChainloadTitleId = 0;
+        firmmuxDirectChainloadMediaType = 0;
+    }
+#else
+    (void)enabled;
+#endif
+}
+
+void firmmuxSetDirectChainloadTarget(u64 titleId, u32 mediaType)
+{
+#if EXPERIMENTAL_FIRMMUX_SHELL
+    firmmuxDirectChainloadTitleId = titleId;
+    firmmuxDirectChainloadMediaType = mediaType;
+#else
+    (void)titleId;
+    (void)mediaType;
+#endif
+}
+
 KLinkedList*    KLinkedList__Initialize(KLinkedList *list)
 {
     list->size = 0;
@@ -182,4 +308,3 @@ u32      PLG_GetStatus(void)
 {
     return (*(vu32 *)PA_FROM_VA_PTR((u32 *)0x1FF800F0)) & 0xFFFF;
 }
-

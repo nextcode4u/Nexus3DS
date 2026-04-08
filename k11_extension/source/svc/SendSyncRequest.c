@@ -192,6 +192,10 @@ Result SendSyncRequestHook(Handle handle)
                         u32 plgStatus = PLG_GetStatus();
                         u32 command = cmdbuf[3];
 
+#if EXPERIMENTAL_FIRMMUX_SHELL
+                        firmmuxObserveAptRoute(currentProcess, command);
+#endif
+
                         if ((plgStatus == PLG_CFG_RUNNING && command == 3) // COMMAND_RESPONSE
                         || (plgStatus == PLG_CFG_INHOME && (command >= 10 || command <= 12)))  // COMMAND_WAKEUP_BY_EXIT || COMMAND_WAKEUP_BY_PAUSE
                             PLG_SignalEvent(PLG_CFG_HOME_EVENT);

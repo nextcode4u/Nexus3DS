@@ -180,7 +180,7 @@ static bool configureHomebrewAutobootCtr(u8 *deliverArg)
     return true;
 }
 
-static bool configureHomebrewAutobootTwl(u8 *deliverArg)
+static bool configureTwlLaunch(u8 *deliverArg, u64 titleId)
 {
     // Here, we pretend to be a TWL app rebooting into another TWL app.
     // We get NS to do all the heavy lifting (starting NWM and AM, etc.) this way.
@@ -195,7 +195,7 @@ static bool configureHomebrewAutobootTwl(u8 *deliverArg)
     tlnc[5] = 0x18; // length of data to calculate CRC over
 
     *(u64 *)(tlnc + 8) = 0; // old title ID
-    *(u64 *)(tlnc + 0x10) = configData.autobootTwlTitleId; // new title ID
+    *(u64 *)(tlnc + 0x10) = titleId; // new title ID
     // bit4: "skip logo" ; bits2:1: NAND boot ; bit0: valid
     *(u16 *)(tlnc + 0x18) = (1 << 4) | (3 << 1) | (1 << 0);
 
@@ -227,6 +227,17 @@ static bool configureHomebrewAutobootTwl(u8 *deliverArg)
     CFG_BOOTENV = 3;
 
     return true;
+}
+
+static bool configureHomebrewAutobootTwl(u8 *deliverArg)
+{
+    return configureTwlLaunch(deliverArg, configData.autobootTwlTitleId);
+}
+
+bool configureDirectTwlLaunch(u64 titleId)
+{
+    u8 *deliverArg = loadDeliverArg();
+    return configureTwlLaunch(deliverArg, titleId);
 }
 
 bool configureHomebrewAutoboot(void)

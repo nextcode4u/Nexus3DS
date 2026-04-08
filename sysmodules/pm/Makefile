@@ -28,6 +28,9 @@ INCLUDES	:=	include
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 DEFINES :=	-D__3DS__
 
+EXPERIMENTAL_FIRMMUX_SHELL ?= 0
+DEFINES += -DEXPERIMENTAL_FIRMMUX_SHELL=$(EXPERIMENTAL_FIRMMUX_SHELL)
+
 ifeq ($(BUILD_FOR_GDB),1)
 	OPTFLAGS := -O0
 	LIBS := -lctrud

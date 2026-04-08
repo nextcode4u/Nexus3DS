@@ -8,6 +8,7 @@
 #include "task_runner.h"
 #include "util.h"
 #include "luma.h"
+#include "luma_shared_config.h"
 
 static bool g_debugNextApplication = false;
 
@@ -272,7 +273,13 @@ static Result launchTitleImpl(Handle *debug, ProcessData **outProcessData, const
         si.stack_size = exheaderInfo->sci.codeset_info.stack_size;
         res = svcRun(process->handle, &si);
         if (R_SUCCEEDED(res) && (launchFlags & PMLAUNCHFLAG_NORMAL_APPLICATION) != 0) {
+            u32 setMask = FIRMMUX_FLAG_FOREGROUND_APP | FIRMMUX_FLAG_RECENT_APP_JUMP;
+
+            if (process->titleId == Luma_SharedConfig->hbldr_3dsx_tid)
+                setMask |= FIRMMUX_FLAG_HBLDR_SHELL_ACTIVE;
+
             g_manager.runningApplicationData = process;
+            firmmuxUpdateObservationFlags(setMask, 0);
             notifySubscribers(0x10C);
         }
     }
@@ -540,6 +547,7 @@ Result autolaunchSysmodules(void)
     if (OS_KernelConfig->ns_tid != 0) {
         programInfo.programId = OS_KernelConfig->ns_tid;
         TRY(launchTitleImplWrapper(NULL, NULL, &programInfo, &programInfo, PMLAUNCHFLAG_LOAD_DEPENDENCIES));
+        firmmuxUpdateObservationFlags(FIRMMUX_FLAG_NS_SEEN, 0);
     }
 
     return res;
